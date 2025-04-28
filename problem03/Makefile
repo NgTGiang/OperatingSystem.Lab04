@@ -1,21 +1,22 @@
-all: main
+CC = gcc
+CFLAGS = -Wall -Wextra -pthread
+TARGET = myframework_demo
 
-CFLAGS= -pthread -fcommon
-CC=gcc $(CFLAGS)
+SRCS = myframework.c fwworker.c main.c
+OBJS = $(SRCS:.c=.o)
 
-main: bkwrk bktask bktpool
-	$(CC) -c -o main.o main.c
-	$(CC) -o mypool main.o bkwrk.o bktask.o bktpool.o
+all: $(TARGET)
 
-bkwrk: bkwrk.c bktpool.h
-	$(CC) -c -o bkwrk.o bkwrk.c
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
 
-bktask: bktask.c bktpool.h
-	$(CC) -c -o bktask.o bktask.c 
-
-bktpool: bktpool.c bktpool.h
-	$(CC) -c -o bktpool.o bktpool.c
+%.o: %.c myframework.h
+	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm *.o
-	rm mypool
+	rm -f $(OBJS) $(TARGET)
+
+run: $(TARGET)
+	./$(TARGET)
+
+.PHONY: all clean run
