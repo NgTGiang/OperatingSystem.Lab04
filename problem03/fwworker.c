@@ -7,11 +7,12 @@ void *fw_worker_loop(void *arg) {
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIG_DISPATCH);
-    sigaddset(&mask, SIG_COMPLETE);
 
     while (1) {
         int sig;
-        sigwait(&mask, &sig);
+        if (sigwait(&mask, &sig) != 0) {
+            continue;
+        }
 
         pthread_mutex_lock(&queue_mutex);
         if (task_queue) {
@@ -24,10 +25,15 @@ void *fw_worker_loop(void *arg) {
             // Execute task
             task->func(task->arg);
 
-            // Notify completion
+            // Free task argument and task
+            free(task->arg);
             atomic_fetch_sub(task->completion_counter, 1);
             free(task);
+
+            pthread_mutex_lock(&queue_mutex);
             workers[worker_id].is_busy = 0;
+            workers[worker_id].current_task = NULL;
+            pthread_mutex_unlock(&queue_mutex);
         } else {
             pthread_mutex_unlock(&queue_mutex);
         }

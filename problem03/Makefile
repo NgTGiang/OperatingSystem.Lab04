@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -pthread
 TARGET = myframework_demo
 
-SRCS = myframework.c fwworker.c main.c
+SRCS = myframework.c fwworker.c fwtask.c main.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)

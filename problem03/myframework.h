@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdatomic.h>
+#include <stdlib.h>
 
 #define MAX_WORKERS 10
 #define SIG_DISPATCH SIGUSR1
@@ -27,10 +28,19 @@ typedef struct {
     atomic_int remaining_tasks; // Tracks pending tasks
 } fw_handle_t;
 
+// Global task queue and mutex
+extern fw_task_t *task_queue;
+extern pthread_mutex_t queue_mutex;
+
 // API Functions
-void myframework_init();
-fw_handle_t *myframework_fork(void (*func)(void *), void *arg, int subtasks);
-void myframework_join(fw_handle_t *handle);
-void myframework_shutdown();
+void myframework_init(void);
+fw_handle_t *fw_fork(void (*func)(void *), void *arg, int subtasks);
+void fw_join(fw_handle_t *handle);
+void myframework_shutdown(void);
+
+// Helper function for task lookup
+fw_task_t *fwtask_get_byid(unsigned int taskid);
+
+void *fw_worker_loop(void *arg);
 
 #endif

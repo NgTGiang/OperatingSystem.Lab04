@@ -1,54 +1,37 @@
-#include "myframework.h" 
+#include "myframework.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-struct fwtask_t *fwtask_get_byid(unsigned int taskid) { 
-  struct fwtask_t *task = fwtask;
-  if (taskid >= (unsigned int)taskid_seed) {
+fw_task_t *fwtask_get_byid(unsigned int taskid) {
+    fw_task_t *task = task_queue;
+    while (task != NULL) {
+        if (task->task_id == taskid) {
+            return task;
+        }
+        task = task->next;
+    }
     return NULL;
-  }
-
-  while (task != NULL) {
-      if (task->taskid == taskid) {
-          return task;
-      }
-      task = task->tnext;
-  }
-
-  return NULL;
 }
 
-int fwtask_init(unsigned int *taskid, void *func, void *arg) { 
-  struct fwtask_t *new_task = malloc(sizeof(struct fwtask_t)); 
-  if (new_task == NULL) { 
-    fprintf(stderr, "Task allocation failed\n"); 
-    return -1; 
-  }
-}
+int fwtask_init(unsigned int *taskid, void *func, void *arg) {
+    fw_task_t *new_task = malloc(sizeof(fw_task_t));
+    if (new_task == NULL) {
+        fprintf(stderr, "Task allocation failed\n");
+        return -1;
+    }
 
-int fwtask_assign_worker(unsigned int taskid, unsigned int wrkid) { 
-  if (wrkid >= MAX_WORKER) { 
-    fprintf(stderr, "Invalid worker ID %u\n", wrkid); 
-    return -1; 
-  }
+    static unsigned int next_taskid = 0;
+    *taskid = next_taskid++;
+    new_task->func = func;
+    new_task->arg = arg;
+    new_task->task_id = *taskid;
+    new_task->completion_counter = NULL; // Set by fw_fork
+    new_task->next = NULL;
 
-  struct fjtask_t *task = fjtask_get_byid(taskid);
-if (task == NULL) {
-    fprintf(stderr, "Task %u not found\n", taskid);
-    return -1;
-}
+    pthread_mutex_lock(&queue_mutex);
+    new_task->next = task_queue;
+    task_queue = new_task;
+    pthread_mutex_unlock(&queue_mutex);
 
-if (wrkid_busy[wrkid]) {
-    fprintf(stderr, "Worker %u is busy\n", wrkid);
-    return -1;
-}
-
-  /* Assign task to worker */
-  wrkid_busy[wrkid] = 1;
-  worker[wrkid].func = task->func;
-  worker[wrkid].arg = task->arg;
-  worker[wrkid].taskid = taskid;
-  task->status = 1; /* Running */
-
-  printf("Assigned task %u to worker %u\n", taskid, wrkid);
-  return 0;
+    return 0;
 }
