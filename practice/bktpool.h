@@ -14,7 +14,7 @@
 int taskid_seed;
 
 int wrkid_tid[MAX_WORKER];
-int * wrkid_busy; //Shared memory for busy flags
+int wrkid_busy[MAX_WORKER];
 int wrkid_cur;
 
 struct bktask_t {
@@ -33,7 +33,7 @@ struct bkworker_t {
   unsigned int bktaskid;
 };
 
-struct bkworker_t * worker; //Shared memory for workers
+struct bkworker_t worker[MAX_WORKER];
 
 /* Prototype API */
 

@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <unistd.h>
 #include "bktpool.h"
 #undef STRESS_TEST
 

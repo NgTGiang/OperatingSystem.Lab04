@@ -141,23 +141,23 @@ int bkwrk_get_worker() {
    * The return value is the ID of the worker which is not currently 
    * busy or wrkid_busy[1] == 0 
    */
-  static unsigned int last_worker = 0;
-  unsigned int current = last_worker;
-  unsigned int checked = 0;
-
-  // Search for available worker starting from last_worker + 1
-  while(checked < MAX_WORKER){
-    current = (current + 1) % MAX_WORKER;
-    checked++;
-
-    if(wrkid_busy[current] == 0){
-      last_worker = current;
-      return current;
-    }
+  unsigned int i, start = wrkid_cur;
+  /* Search from wrkid_cur to MAX_WORKER */
+  for (i = start; i < MAX_WORKER; i++) {
+      if (wrkid_busy[i] == 0) {
+          wrkid_cur = (i + 1) % MAX_WORKER; // Next worker for FIFO
+          return i;
+      }
   }
-
-  // Return -1 if all workers are busy
-  return -1;
+  /* Search from 0 to wrkid_cur-1 */
+  for (i = 0; i < start; i++) {
+      if (wrkid_busy[i] == 0) {
+          wrkid_cur = (i + 1) % MAX_WORKER;
+          return i;
+      }
+  }
+  fprintf(stderr, "No idle workers available\n");
+  return -1; // No idle workers
 }
 
 int bkwrk_dispatch_worker(unsigned int wrkid) {
@@ -176,6 +176,7 @@ int bkwrk_dispatch_worker(unsigned int wrkid) {
   syscall(SYS_tkill, tid, SIG_DISPATCH);
   #else
   /* TODO: Implement fork version to signal worker process here */
+  /* Fork-based dispatch using kill */
   pid_t pid = wrkid_tid[wrkid];
   #ifdef DEBUG
       fprintf(stderr, "brkwrk dispatch wrkid %d - send signal %u \n", wrkid, pid);
